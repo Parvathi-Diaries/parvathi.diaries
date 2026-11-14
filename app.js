@@ -200,3 +200,38 @@ gsap.ticker.add(() => {
   const done = () => gsap.to(".loader", { opacity: 0, duration: 0.7, delay: 0.3, onComplete: () => { $(".loader").remove(); ScrollTrigger.refresh(); } });
   Promise.race([new Promise(r => addEventListener("load", r)), new Promise(r => setTimeout(r, 3500))]).then(() => tl.then(done));
 })();
+
+/* ======================= like counter ======================= */
+// Shared count on Abacus (free, no account; a key expires after ~6 months without hits).
+//   likes:  https://abacus.jasoncameron.dev/get/parvathi-diaries/site-likes
+//   visits: https://abacus.jasoncameron.dev/get/parvathi-diaries/site-visits  (one per browser per day)
+// One like per browser, remembered in localStorage.
+(() => {
+  const API = "https://abacus.jasoncameron.dev", NS = "parvathi-diaries";
+  const btn = $(".like-btn"), num = $(".like-num"), heart = $(".like-heart"), word = $(".like-word"), note = $(".like-note");
+  const store = { get: k => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
+  const call = path => fetch(`${API}/${path}`).then(r => (r.ok ? r.json() : r.status === 404 ? { value: 0 } : Promise.reject(r.status))).then(d => d.value);
+  const show = n => { num.textContent = Number(n).toLocaleString("en-IN"); word.textContent = n === 1 ? "like" : "likes"; };
+  const mark = () => { btn.setAttribute("aria-pressed", "true"); heart.textContent = "❤️"; note.textContent = "Thank you for the love 💛 Har Har Mahadev"; };
+  if (store.get("pd-liked")) mark();
+  call(`get/${NS}/site-likes`).then(show).catch(() => { num.textContent = "♥"; });
+  const today = new Date().toISOString().slice(0, 10);
+  if (store.get("pd-visit") !== today) { store.set("pd-visit", today); call(`hit/${NS}/site-visits`).catch(() => {}); }
+  btn.addEventListener("click", () => {
+    if (btn.getAttribute("aria-pressed") === "true") { gsap.fromTo(heart, { scale: 1.4 }, { scale: 1, duration: 0.5, ease: "elastic.out(1.4, 0.3)" }); return; }
+    store.set("pd-liked", "1"); mark();
+    const cur = parseInt(num.textContent.replace(/\D/g, ""), 10);
+    if (!Number.isNaN(cur)) show(cur + 1);                       // show it at once; the server's number follows
+    call(`hit/${NS}/site-likes`).then(show).catch(() => {});
+    gsap.fromTo(heart, { scale: 0.4, rotate: -20 }, { scale: 1, rotate: 0, duration: 0.7, ease: "elastic.out(1.5, 0.35)" });
+    const r = heart.getBoundingClientRect();
+    for (let i = 0; i < 14; i++) {
+      const s = document.createElement("span"); s.textContent = ["❤️", "💛", "🌸", "✨"][i % 4];
+      s.style.cssText = "position:fixed;left:0;top:0;z-index:80;pointer-events:none;font-size:22px";
+      document.body.appendChild(s);
+      const a = Math.random() * Math.PI * 2, d = 60 + Math.random() * 110;
+      gsap.fromTo(s, { x: r.left + r.width / 2 - 11, y: r.top, scale: 0.3 },
+        { x: `+=${Math.cos(a) * d}`, y: `+=${Math.sin(a) * d - 60}`, scale: 1.1, opacity: 0, duration: 1.2 + Math.random() * 0.5, ease: "power3.out", onComplete: () => s.remove() });
+    }
+  });
+})();
