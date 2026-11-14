@@ -203,7 +203,7 @@ gsap.ticker.add(() => {
 
 /* ======================= like counter ======================= */
 // Shared count on Abacus (free, no account; a key expires after ~6 months without hits).
-//   likes:  https://abacus.jasoncameron.dev/get/parvathi-diaries/site-likes
+//   likes:  https://abacus.jasoncameron.dev/get/parvathi-diaries/likes  (created at 545; admin key in gen/.abacus_likes.json, not deployed)
 //   visits: https://abacus.jasoncameron.dev/get/parvathi-diaries/site-visits  (one per browser per day)
 // One like per browser, remembered in localStorage.
 (() => {
@@ -214,7 +214,7 @@ gsap.ticker.add(() => {
   const show = n => { num.textContent = Number(n).toLocaleString("en-IN"); word.textContent = n === 1 ? "like" : "likes"; };
   const mark = () => { btn.setAttribute("aria-pressed", "true"); heart.textContent = "❤️"; note.textContent = "Thank you for the love 💛 Har Har Mahadev"; };
   if (store.get("pd-liked")) mark();
-  call(`get/${NS}/site-likes`).then(show).catch(() => { num.textContent = "♥"; });
+  call(`get/${NS}/likes`).then(show).catch(() => { num.textContent = "♥"; });
   const today = new Date().toISOString().slice(0, 10);
   if (store.get("pd-visit") !== today) { store.set("pd-visit", today); call(`hit/${NS}/site-visits`).catch(() => {}); }
   btn.addEventListener("click", () => {
@@ -222,7 +222,7 @@ gsap.ticker.add(() => {
     store.set("pd-liked", "1"); mark();
     const cur = parseInt(num.textContent.replace(/\D/g, ""), 10);
     if (!Number.isNaN(cur)) show(cur + 1);                       // show it at once; the server's number follows
-    call(`hit/${NS}/site-likes`).then(show).catch(() => {});
+    call(`hit/${NS}/likes`).then(show).catch(() => {});
     gsap.fromTo(heart, { scale: 0.4, rotate: -20 }, { scale: 1, rotate: 0, duration: 0.7, ease: "elastic.out(1.5, 0.35)" });
     const r = heart.getBoundingClientRect();
     for (let i = 0; i < 14; i++) {
